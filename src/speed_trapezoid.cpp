@@ -9,7 +9,7 @@ using std::endl;
 constexpr double ACCELERATION;
 constexpr double GOALSPEED;
 double point[2]{};
-
+double total_distance{};
 struct Length {
   double full_length;
   double acceleration_length;
@@ -23,16 +23,23 @@ void pointCallback(const std_msgs::Float64MultiArray &msg){
   point[1] = msg.data[1];
 }
 
+void distanceCallback(const std_msgs::Float64 &msg) {
+  total_distance = msg.data;
+}
+
 void lengthCal(Length &get_value) {
   get_value.full_length = point[1] - point[0];
   get_value.acceleration_length = ;
   get_value.deceleration_length = point[1] - point[0];
 }
 
+void velCal(Length &get_value) {}
 int main(int argc, char **argv) {
   ros::init(argc, argv, "accel");
   ros::NodeHandle n;
   ros::Subscriber point_sub = n.subscribe("point", 10, pointCallback);
+  ros::Subscriber total_distance_sub =
+      n.subscribe("total_distance", 10, distanceCallback);
   ros::Publisher velocity_pub = n.advertise<std_msgs::Float64>("real_vel", 10);
   ros::Rate loop_rate(100);
   Length value;
@@ -40,6 +47,7 @@ int main(int argc, char **argv) {
 
   while (ros::ok()) {
     lengthCal(value);
+    velCal(value);
     initial_velocity = value.ros::spinOnce();
     loop_rate.sleep();
   }
