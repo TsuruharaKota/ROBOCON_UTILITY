@@ -6,8 +6,9 @@
 using std::cout;
 using std::endl;
 
-constexpr double ACCELERATION;
-constexpr double GOALSPEED;
+constexpr double ACCELERATION = 0.5;
+constexpr double ACCELERATION_SUB = 0.7;
+constexpr double GOALSPEED = 1.5;
 
 double point[2]{};
 double total_distance{};
@@ -19,6 +20,7 @@ struct Length {
   double Ve;
   double acceleration_length;
   double deceleration_length;
+  double middle_length;
 }
 
 void pointCallback(const std_msgs::Float64MultiArray &msg){
@@ -32,25 +34,31 @@ void distanceCallback(const std_msgs::Float64 &msg) {
   total_distance = msg.data;
 }
 
-void lengthCal(Length &get_value) {
+void lengthCal(Length &get_value, bool flag) {
   // Vs value should be changed;
   get_value.Vs = 1;
   get_value.Ve = 0;
   get_value.full_length = point[1] - point[0];
   get_value.acceleration_length = pow(GOALSPEED - Vs, 2) / 2;
   get_value.deceleration_length = pow(GOALSPEED - Ve, 2) / 2;
+  get_value.middle_length =
+      full_length - get_value.acceleration - get_value.deceleration;
   get_value.start_point = point[0];
+  get_value.middle_length == 0 ? flag = true : flag = false;
 }
 
-double velCal(Length &get_value) {
+double velCal(Length &get_value, bool flag) {
   double vel;
   if (total_distance < get_value.start_point + get_value.acceleration_length) {
-
-  } else if (total_distance < get_value.start_point + get_value.deceleration) {
-
+    flag ? vel = ACCELERATION * (total_distance - point[0]) + Vs
+         : ACCELERATION_SUB * (total_distance - point[0]) + Vs;
+  } else if (total_distance > get_value.start_point + get_value.middle_length) {
+    flag ? vel = -ACCELERATION * (total_distance - point[0]) + Vs
+         : -ACCELERATION_SUB * (total_distance - point[0]) + Vs;
   } else {
     vel = GOAL_SPEED;
   }
+  return vel;
 }
 
 int main(int argc, char **argv) {
@@ -64,10 +72,11 @@ int main(int argc, char **argv) {
   std_msgs::Float64 real_vel;
   Length value;
   static double initial_velocity;
+  bool flag_change_accel = false;
 
   while (ros::ok()) {
-    lengthCal(value);
-    real_vel.data = velCal(value);
+    lengthCal(value, flag_change_accel);
+    real_vel.data = velCal(value, flag_change_accel);
     initial_velocity = value.Ve;
     velocity_pub.publish(real_vel);
     ros::spinOnce();
