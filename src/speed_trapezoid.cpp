@@ -23,11 +23,11 @@ struct Length {
   double middle_length;
 }
 
-void pointCallback(const std_msgs::Float64MultiArray &msg){
+void pointCallback(const geometry_msgs::Point &msg){
   //----------point[0] means start point----------
   //----------point[1] means goal point----------
-  point[0] = msg.data[0];
-  point[1] = msg.data[1];
+  point[0] = msg.x;
+  point[1] = msg.y;
 }
 
 void distanceCallback(const std_msgs::Float64 &msg) {

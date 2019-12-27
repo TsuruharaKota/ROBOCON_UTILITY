@@ -26,7 +26,7 @@ double createMap() {
   }
 }
 double straightLine(const double t) {}
-double bezierCurve(const double t) {}
+double circleCurve(const double t) {}
 
 bool check(vector2 goal_point) {
   if (goal_point.x - 0.1 < current_point.x &&
