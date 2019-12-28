@@ -12,6 +12,7 @@ constexpr double GOALSPEED = 1.5;
 
 double point[2]{};
 double total_distance{};
+double velocity_end;
 
 struct Length {
   double start_point;
@@ -34,10 +35,14 @@ void distanceCallback(const std_msgs::Float64 &msg) {
   total_distance = msg.data;
 }
 
+void velocityCallback(const std_msgs::Float64 &msg) {
+  velocity_final = msg.data;
+}
+
 void lengthCal(Length &get_value, bool flag) {
   // Vs value should be changed;
   get_value.Vs = 1;
-  get_value.Ve = 0;
+  get_value.Ve = velocity_final;
   get_value.full_length = point[1] - point[0];
   get_value.acceleration_length = pow(GOALSPEED - Vs, 2) / 2;
   get_value.deceleration_length = pow(GOALSPEED - Ve, 2) / 2;
@@ -67,13 +72,15 @@ int main(int argc, char **argv) {
   ros::Subscriber point_sub = n.subscribe("point", 10, pointCallback);
   ros::Subscriber total_distance_sub =
       n.subscribe("total_distance", 10, distanceCallback);
+  ros::Subscriber velocity_sub =
+      n.subscribe("velocity_end", 10, velocityCallback);
   ros::Publisher velocity_pub = n.advertise<std_msgs::Float64>("real_vel", 10);
   ros::Rate loop_rate(100);
   std_msgs::Float64 real_vel;
   Length value;
   static double initial_velocity;
   bool flag_change_accel = false;
-
+  //最終目標速度(Ve)を受け取るように再実装する必要がある
   while (ros::ok()) {
     lengthCal(value, flag_change_accel);
     real_vel.data = velCal(value, flag_change_accel);
