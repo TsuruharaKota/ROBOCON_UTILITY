@@ -8,14 +8,12 @@
 using std::vector;
 using std::atan;
 
-constexpr double R = 3.0;
-double map_point[10][2]{{1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5},
-                        {6, 6}, {7, 7}, {8, 8}, {9, 9}, {10, 10}};
 struct vector2 {
   double x;
   double y;
   vector2(double _x, double _y) : x(_x), y(_y) {}
 };
+
 vector<vector2> map_point = {{1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5},
                              {6, 6}, {7, 7}, {8, 8}, {9, 9}, {10, 10}};
 vector<vector2> goal_map;
@@ -61,19 +59,50 @@ double calcCircleOf2Podouble(const vector2 point_1, const vector2 point_2,
   return stat;
 }
 
-void odomCallback(const geometry_msgs::Point &msg) {
-  current_point.x = msg.x;
-  current_point.y = msg.y;
+double straightLine_x(const vector2 now, const vector2 prev) {
+  vector2 cal(0, 0);
+  cal.x = now.x;
+  cal.y = (now.y + prev.y) / 2;
+  goal_map.push_back(cal);
+  goal_map.push_back(now);
+}
+
+double straightLine_y(const vector2 now, const vector2 prev) {
+  vector2 cal(0, 0);
+  cal.x = (now.x + prev.x) / 2;
+  cal.y = now.y;
+  goal_map.push_back(cal);
+  goal_map.push_back(now);
+}
+
+double circleCurve(const vector2 prev, const vector2 now, const vector2 after) {
+  vector2 middle(0, 0);
+  vector2 mid_1(0, 0);
+  vector2 mid_2(0, 0);
+  double r;
+  calcCircleOf2Podouble(prev, now, after, middle, r);
+  double theta_s = atan((prev.x - middle.x) / (prev.y - middle.y));
+  double theta_e = atan((after.x - middle.x) / (after.y - middle.y));
+  double theta_1 = ((4 * theta_s) - theta_e) / 3;
+  double theta_2 = ((5 * theta_s) - (2 * theta_e)) / 5;
+  mid_1.x = r * cos(theta_1) + result.x;
+  mid_1.y = r * sin(theta_1) + result.y;
+  mid_2.x = r * cos(theta_2) + result.x;
+  mid_1.y = r * sin(theta_2) + result.y;
+  goal_map.push_back(prev);
+  goal_map.push_back(mid_1);
+  goal_map.push_back(mid_2);
+  goal_map.push_back(after);
 }
 
 double createMap() {
   for (int i = 0; i < 10; ++i) {
     if (i != 0) {
       // x軸上が等しい時
-      if (map_point[i].x == map_point[i - 1].y) {
+      if (map_point[i].x == map_point[i - 1].x) {
         straightLine_x(map_point[i], map_point[i - 1]);
         // y軸上が等しい時
-      } else if (map_point[i][1] == map_point[i - 1][1]) {
+      } else if (map_point[i].y == map_point[i - 1].y) {
         straightLine_y(map_point[i], map_point[i - 1]);
         // x軸もy軸も等しくない時は円弧補間する
       } else {
@@ -85,25 +114,10 @@ double createMap() {
     }
   }
 }
-double straightLine_x(const vector2 now, const vector2 prev) {
-  goal_map.push_back(now);
-  vector2 cal(0, 0);
-  cal.x = (now.x + prev.x) / 2;
-  cal.y = now.y;
-  goal_map.push_back(cal);
-  ++counter;
-}
-double straightLine_y(const vector2 now, const vector2 prev) {
-  goal_map.push_back(now);
-  vector2 cal(0, 0);
-  cal.x = now.x;
-  cal.y = (now.y + prev.y) / 2;
-  goal_map.push_back(cal);
-}
-double circleCurve(const vector2 prev, const vector2 now, const vector2 after) {
-  vector2 middle(0, 0);
-  double r;
-  calcCircleOf2Podouble(prev, now, after, middle, r);
+
+void odomCallback(const geometry_msgs::Point &msg) {
+  current_point.x = msg.x;
+  current_point.y = msg.y;
 }
 
 bool check(vector2 goal_point) {
