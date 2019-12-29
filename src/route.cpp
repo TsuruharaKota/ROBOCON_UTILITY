@@ -85,10 +85,10 @@ double circleCurve(const vector2 prev, const vector2 now, const vector2 after) {
   double theta_e = atan((after.x - middle.x) / (after.y - middle.y));
   double theta_1 = ((4 * theta_s) - theta_e) / 3;
   double theta_2 = ((5 * theta_s) - (2 * theta_e)) / 5;
-  mid_1.x = r * cos(theta_1) + result.x;
-  mid_1.y = r * sin(theta_1) + result.y;
-  mid_2.x = r * cos(theta_2) + result.x;
-  mid_1.y = r * sin(theta_2) + result.y;
+  mid_1.x = r * cos(theta_1) + middle.x;
+  mid_1.y = r * sin(theta_1) + middle.y;
+  mid_2.x = r * cos(theta_2) + middle.x;
+  mid_1.y = r * sin(theta_2) + middle.y;
   goal_map.push_back(prev);
   goal_map.push_back(mid_1);
   goal_map.push_back(mid_2);
