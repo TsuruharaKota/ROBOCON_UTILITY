@@ -1,8 +1,12 @@
+#include <cmath>
 #include <geometry_msgs/Point.h>
 #include <iostream>
 #include <ros.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <vector>
+
+using std::vector;
+using std::atan;
 
 constexpr double R = 3.0;
 double map_point[10][2]{{1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5},
@@ -16,6 +20,46 @@ vector<vector2> map_point = {{1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5},
                              {6, 6}, {7, 7}, {8, 8}, {9, 9}, {10, 10}};
 vector<vector2> goal_map;
 vector2 current_point(0, 0);
+
+double calcCircleOf2Podouble(const vector2 point_1, const vector2 point_2,
+                             const vector2 point_3, vector2 &real, double &r) {
+  long ox, oy, a, b, c, d;
+  long r1, r2, r3;
+  double stat;
+
+  a = point_2.x - point_1.x;
+  b = point_2.y - point_1.y;
+  c = point_3.x - point_1.x;
+  d = point_3.y - point_1.y;
+
+  stat = -1;
+
+  if ((a && d) || (b && c)) {
+    ox = point_1.x +
+         (d * (a * a + b * b) - b * (c * c + d * d)) / (a * d - b * c) / 2;
+    if (b) {
+      oy = (a * (point_1.x + point_2.x - ox - ox) +
+            b * (point_1.y + point_2.y)) /
+           b / 2;
+    } else {
+      oy = (c * (point_1.x + point_3.x - ox - ox) +
+            d * (point_1.y + point_3.y)) /
+           d / 2;
+    }
+    r1 = sqrt((ox - point_1.x) * (ox - point_1.x) +
+              (oy - point_1.y) * (oy - point_1.y));
+    r2 = sqrt((ox - point_2.x) * (ox - point_2.x) +
+              (oy - point_2.y) * (oy - point_2.y));
+    r3 = sqrt((ox - point_3.x) * (ox - point_3.x) +
+              (oy - point_3.y) * (oy - point_3.y));
+    real.x = ox;
+    real.y = oy;
+    r = (r1 + r2 + r3) / 3;
+    stat = 0;
+  }
+
+  return stat;
+}
 
 void odomCallback(const geometry_msgs::Point &msg) {
   current_point.x = msg.x;
@@ -33,7 +77,8 @@ double createMap() {
         straightLine_y(map_point[i], map_point[i - 1]);
         // x軸もy軸も等しくない時は円弧補間する
       } else {
-        circleCurve(map_point[i], map_point[i - 1]);
+        circleCurve(map_point[i - 1], map_point[i], map_point[i + 1]);
+        ++i;
       }
     } else {
       goal_map.push_back(map_point[0]);
@@ -46,6 +91,7 @@ double straightLine_x(const vector2 now, const vector2 prev) {
   cal.x = (now.x + prev.x) / 2;
   cal.y = now.y;
   goal_map.push_back(cal);
+  ++counter;
 }
 double straightLine_y(const vector2 now, const vector2 prev) {
   goal_map.push_back(now);
@@ -54,11 +100,10 @@ double straightLine_y(const vector2 now, const vector2 prev) {
   cal.y = (now.y + prev.y) / 2;
   goal_map.push_back(cal);
 }
-double circleCurve(const vector2 now, const vector2 prev) {
+double circleCurve(const vector2 prev, const vector2 now, const vector2 after) {
   vector2 middle(0, 0);
-  middle.x = middle.y = double theta_s =
-      atan((prev.x - middle.x) / (prev.y - middle.y));
-  double theta_e = atan((now.x - middle.x) / (now.y - middle.y));
+  double r;
+  calcCircleOf2Podouble(prev, now, after, middle, r);
 }
 
 bool check(vector2 goal_point) {
@@ -81,9 +126,9 @@ int main(int argc, char **argv) {
   geometry_msgs::Point route;
   std_msgs::Float62 real_Ve;
   route.data.resize(2);
+  static int counter = 0;
   createMap();
   ros::Rate leep_rate(100);
-  static int counter = 0;
   vector<double> Ve_param = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                              1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
