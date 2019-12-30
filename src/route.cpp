@@ -7,15 +7,20 @@
 
 using std::vector;
 using std::atan;
+using std::cout;
+using std::endl;
+using std::abs;
 
+constexpr int division = 5;
 struct vector2 {
   double x;
   double y;
   vector2(double _x, double _y) : x(_x), y(_y) {}
 };
 
-vector<vector2> map_point = {{1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5},
-                             {6, 6}, {7, 7}, {8, 8}, {9, 9}, {10, 10}};
+vector<vector2> map_point = {{0, 0},       {5000, 0},    {5500, 500},
+                             {5000, 1000}, {6000, 1000}, {6000, 500},
+                             {6000, 0},    {0, 0}};
 vector<vector2> goal_map;
 vector2 current_point(0, 0);
 
@@ -60,43 +65,75 @@ double calcCircleOf2Podouble(const vector2 point_1, const vector2 point_2,
 }
 
 double straightLine_x(const vector2 now, const vector2 prev) {
-  vector2 cal(0, 0);
-  cal.x = now.x;
-  cal.y = (now.y + prev.y) / 2;
-  goal_map.push_back(cal);
-  goal_map.push_back(now);
+  for (int n = 1; n <= division; ++n) {
+    vector2 cal(0, 0);
+    cal.x = now.x;
+    cal.y = prev.y + (((now.y - prev.y) / division) * n);
+    goal_map.push_back(cal);
+  }
 }
 
 double straightLine_y(const vector2 now, const vector2 prev) {
-  vector2 cal(0, 0);
-  cal.x = (now.x + prev.x) / 2;
-  cal.y = now.y;
-  goal_map.push_back(cal);
-  goal_map.push_back(now);
+  for (int n = 1; n <= division; ++n) {
+    vector2 cal(0, 0);
+    cal.y = now.y;
+    cal.x = prev.x + (((now.x - prev.x) / division) * n);
+    goal_map.push_back(cal);
+  }
 }
 
 double circleCurve(const vector2 prev, const vector2 now, const vector2 after) {
   vector2 middle(0, 0);
   vector2 mid_1(0, 0);
   vector2 mid_2(0, 0);
+  vector2 mid_3(0, 0);
   double r;
   calcCircleOf2Podouble(prev, now, after, middle, r);
-  double theta_s = atan((prev.x - middle.x) / (prev.y - middle.y));
-  double theta_e = atan((after.x - middle.x) / (after.y - middle.y));
-  double theta_1 = ((4 * theta_s) - theta_e) / 3;
-  double theta_2 = ((5 * theta_s) - (2 * theta_e)) / 3;
-  mid_1.x = r * cos(theta_1) + middle.x;
-  mid_1.y = r * sin(theta_1) + middle.y;
-  mid_2.x = r * cos(theta_2) + middle.x;
-  mid_2.y = r * sin(theta_2) + middle.y;
+  double x_s = 0, y_s = 0;
+  y_s = middle.x - prev.x;
+  x_s = middle.y - prev.y;
+  // cout << "x_s " << x_s << endl;
+  // cout << "y_s " << y_s << endl;
+  double theta_s = atan2(y_s, x_s);
+  double x_e = 0, y_e = 0;
+  y_e = after.x - middle.x;
+  x_e = -(after.y - middle.y);
+  double theta_e = atan2(y_e, x_e);
+  // cout << "theta_s " << theta_s << endl;
+  // cout << "theta_e " << theta_e * (180 / M_PI) << endl;
+  double devide_angle = (theta_e - theta_s) / 4;
+  // cout << "devide_angle " << devide_angle << endl;
+  double theta_1 = theta_s + devide_angle;
+  double theta_2 = theta_s + (devide_angle * 2);
+  double theta_3 = theta_s + (devide_angle * 3);
+  theta_1 > M_PI / 2 ? mid_1.y = r + abs((r * cos(theta_1))) + prev.y
+                     : mid_1.y = r - (r * cos(theta_1)) + prev.y;
+  mid_1.x = r * sin(theta_1) + middle.x + abs(prev.x - middle.x);
+  theta_2 > M_PI / 2 ? mid_2.y = r + abs((r * cos(theta_2))) + prev.y
+                     : mid_2.y = r - (r * cos(theta_2)) + prev.y;
+  mid_2.x = r * sin(theta_2) + middle.x + abs(prev.x - middle.x);
+  theta_3 > M_PI / 3 ? mid_3.y = r + abs((r * cos(theta_3))) + prev.y
+                     : mid_3.y = r - (r * cos(theta_3)) + prev.y;
+  mid_3.x = r * sin(theta_3) + middle.x + abs((prev.x - middle.x));
   goal_map.push_back(prev);
   goal_map.push_back(mid_1);
   goal_map.push_back(mid_2);
+  goal_map.push_back(mid_3);
   goal_map.push_back(after);
+  /*cout << "r = " << r << endl;
+  cout << "theta_1 " << theta_1 * (180 / M_PI) << endl;
+  cout << "theta_2 " << theta_2 * (180 / M_PI) << endl;
+  cout << "theta_3 " << theta_3 * (180 / M_PI) << endl;
+  cout << "(middle.x, middle.y) : (" << middle.x << ", " << middle.y << ")"
+       << endl;
+  cout << "(mid_1.x, mid_1.y) : (" << mid_1.x << ", " << mid_1.y << ")" << endl;
+  cout << "(mid_2.x, mid_2.y) : (" << mid_2.x << ", " << mid_2.y << ")" << endl;
+  cout << "(mid_3.x, mid_3.y) : (" << mid_3.x << ", " << mid_3.y << ")" << endl;
+  */
 }
 
 double createMap() {
-  for (int i = 0; i < 10; ++i) {
+  for (int i = 0; i < 8; ++i) {
     if (i != 0) {
       // x軸上が等しい時
       if (map_point[i].x == map_point[i - 1].x) {
