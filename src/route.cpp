@@ -176,8 +176,7 @@ int main(int argc, char **argv) {
   ros::Subscriber odom_sub = n.subscribe("odometry_point", 10, odomCallback);
   geometry_msgs::Point route;
   std_msgs::Float62 real_Ve;
-  route.data.resize(2);
-  static int counter = 0;
+  static int counter = 1;
   createMap();
   ros::Rate leep_rate(100);
   vector<double> Ve_param = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
