@@ -173,7 +173,8 @@ int main(int argc, char **argv) {
   ros::Publisher route_pub = n.advertise<geometry_msgs::Point>("point", 10);
   ros::Publisher velocity_pub =
       n.advertise<std_msgs::Float64>("velocity_end", 10);
-  ros::Subscriber odom_sub = n.subscribe("odometry_point", 10, odomCallback);
+  ros::Publisher velocity_pub = ros::Subscriber odom_sub =
+      n.subscribe("odometry_point", 10, odomCallback);
   geometry_msgs::Point route;
   std_msgs::Float62 real_Ve;
   static int counter = 1;
