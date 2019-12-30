@@ -80,7 +80,6 @@ int main(int argc, char **argv) {
   std_msgs::Float64 real_vel;
   Length value;
   bool flag_change_accel = false;
-  //最終目標速度(Ve)を受け取るように再実装する必要がある
   while (ros::ok()) {
     lengthCal(value, flag_change_accel);
     real_vel.data = velCal(value, flag_change_accel);
