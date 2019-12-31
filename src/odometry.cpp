@@ -16,9 +16,10 @@ int main(int argc, char **argv) {
       n.advertise<std_msgs::Float64>("total_distance", 50);
   geometry_msgs::Point odometry_point;
   std_msgs::Float64 total_distance;
-  constexpr double WHEEL_CIRC = 101.6 * M_PI;
+  constexpr double WHEEL_CIRC = 101.6 / 2;
   constexpr int RANGE = 200;
-  vector<double> wheel_pos{0, 0, 0, 0};
+  constexpr int FREQUENCY = 200;
+  vector<double> wheel_vel{0, 0, 0, 0};
   vector<double> wheel_dis{0, 0};
   RotaryInc rotary[4] = {RotaryInc(1, 2, 3), RotaryInc(4, 5, 6),
                          RotaryInc(7, 8, 9), RotaryInc(10, 11, 12)};
@@ -26,15 +27,27 @@ int main(int argc, char **argv) {
 
   while (ros::ok()) {
 
-    wheel_pos[0] = (static_cast<int>(rotary[0].diff()) / RANGE) * WHEEL_CIRC;
-    wheel_pos[1] = (static_cast<int>(rotary[1].diff()) / RANGE) * WHEEL_CIRC;
-    wheel_pos[2] = (static_cast<int>(rotary[2].diff()) / RANGE) * WHEEL_CIRC;
-    wheel_pos[3] = (static_cast<int>(rotary[3].diff()) / RANGE) * WHEEL_CIRC;
+    wheel_vel[0] =
+        (((static_cast<double>(rotary[0].diff()) / RANGE) * 2 * M_PI) /
+         FREQUENCY) *
+        WHEEL_CIRC;
+    wheel_vel[1] =
+        (((static_cast<double>(rotary[1].diff()) / RANGE) * 2 * M_PI) /
+         FREQUENCY) *
+        WHEEL_CIRC;
+    wheel_vel[2] =
+        (((static_cast<double>(rotary[2].diff()) / RANGE) * 2 * M_PI) /
+         FREQUENCY) *
+        WHEEL_CIRC;
+    wheel_vel[3] =
+        (((static_cast<double>(rotary[3].diff()) / RANGE) * 2 * M_PI) /
+         FREQUENCY) *
+        WHEEL_CIRC;
 
-    odometry_point.x += (-wheel_pos[1] + wheel_pos[3]) / 2;
-    odometry_point.y += (wheel_pos[0] - wheel_pos[2]) / 2;
-    odometry_dis[0] += (-abs(wheel_pos[1]) + abs(wheel_pos[3])) / 2;
-    odometry_dis[1] += (abs(wheel_pos[0]) - abs(wheel_pos[2])) / 2;
+    odometry_point.x += (-wheel_vel[1] + wheel_vel[3]) * FREQUENCY;
+    odometry_point.y += (wheel_vel[0] - wheel_vel[2]) * FREQUENCY;
+    odometry_dis[0] += abs(-wheel_vel[1] + wheel_vel[3]);
+    odometry_dis[1] += abs(wheel_vel[0] - (wheel_vel[2]);
     total_distance.data =
         sprt(pow(odometry_dis[0], 2) * pow(odometry_dis[1], 2));
 

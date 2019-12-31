@@ -173,14 +173,18 @@ int main(int argc, char **argv) {
   ros::Publisher route_pub = n.advertise<geometry_msgs::Point>("point", 10);
   ros::Publisher velocity_pub =
       n.advertise<std_msgs::Float64>("velocity_end", 10);
+  ros::Publisher rotate_pub = n.advertise<std_msgs::Float64>("rotate_goal", 10);
   ros::Subscriber odom_sub = n.subscribe("odometry_point", 10, odomCallback);
   geometry_msgs::Point route;
-  std_msgs::Float62 real_Ve;
+  std_msgs::Float64 real_Ve;
+  std_msgs::Float64 goal_rotate;
   static int counter = 1;
   createMap();
   ros::Rate leep_rate(100);
   vector<double> Ve_param = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                              1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+  vector<double> rotate_param = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
   while (ros::ok()) {
     //値の更新、checkでオドメトリが目標地点内に入っていたら更新する
@@ -188,10 +192,12 @@ int main(int argc, char **argv) {
       route.x = goal_map[counter].x;
       route.y = goal_map[counter].y;
       real_Ve.data = Ve_param[counter];
+      goal_rotate.data = rotate_param[counter];
       ++counter;
     }
     route_pub.publish(route);
     velocity_pub.publish(real_Ve);
+    rotate_pub.publish(goal_rotate);
     ros::spinOnce();
     loop_rate.sleep();
   }
