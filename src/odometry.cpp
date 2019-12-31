@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
   std_msgs::Float64 total_distance;
   constexpr double WHEEL_CIRC = 101.6 / 2;
   constexpr int RANGE = 200;
-  constexpr int FREQUENCY = 200;
+  constexpr int FREQ = 200;
   vector<double> wheel_vel{0, 0, 0, 0};
   vector<double> wheel_dis{0, 0};
   RotaryInc rotary[4] = {RotaryInc(1, 2, 3), RotaryInc(4, 5, 6),
@@ -29,23 +29,23 @@ int main(int argc, char **argv) {
 
     wheel_vel[0] =
         (((static_cast<double>(rotary[0].diff()) / RANGE) * 2 * M_PI) /
-         FREQUENCY) *
+         (1 / FREQ)) *
         WHEEL_CIRC;
     wheel_vel[1] =
         (((static_cast<double>(rotary[1].diff()) / RANGE) * 2 * M_PI) /
-         FREQUENCY) *
+         (1 / FREQ)) *
         WHEEL_CIRC;
     wheel_vel[2] =
         (((static_cast<double>(rotary[2].diff()) / RANGE) * 2 * M_PI) /
-         FREQUENCY) *
+         (1 / FREQ)) *
         WHEEL_CIRC;
     wheel_vel[3] =
         (((static_cast<double>(rotary[3].diff()) / RANGE) * 2 * M_PI) /
-         FREQUENCY) *
+         (1 / FREQ)) *
         WHEEL_CIRC;
 
-    odometry_point.x += (-wheel_vel[1] + wheel_vel[3]) * FREQUENCY;
-    odometry_point.y += (wheel_vel[0] - wheel_vel[2]) * FREQUENCY;
+    odometry_point.x += (-wheel_vel[1] + wheel_vel[3]) * (1 / FREQ);
+    odometry_point.y += (wheel_vel[0] - wheel_vel[2]) * (1 / FREQ);
     odometry_dis[0] += abs(-wheel_vel[1] + wheel_vel[3]);
     odometry_dis[1] += abs(wheel_vel[0] - (wheel_vel[2]);
     total_distance.data =
